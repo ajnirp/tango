@@ -1,8 +1,3 @@
-// TODO: pass around slices instead of references to vectors?
-// TODO: fix the "three identical" logic in "can_set"
-// TODO: look into implementing row and col iterators for the board Vec?
-// https://rust-for-c-programmers.com/ch13/13_3_creating_custom_iterators.html
-
 mod board;
 mod constraint;
 mod solver;
