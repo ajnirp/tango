@@ -6,35 +6,30 @@
 // constraint North, East, South, West.
 
 pub struct Constraint {
-    from: u8,
-    to: u8,
+    from: usize,
+    to: usize,
     eq: bool,
 }
 
-pub fn print(board: &[u8; 36]) {
-    for r in 0..6 {
-        for c in 0..6 {
-            print!("{}", board[r*6 + c]);
-        }
-        println!("");
-    }
-}
+fn side(board: &Vec<u8>) -> usize { board.len().isqrt() }
+fn row(i: usize, side: usize) -> usize { i / side }
+fn col(i: usize, side: usize) -> usize { i % side }
 
-fn at(board: &[u8; 36], r: usize, c: usize) -> u8 { board[r*6 + c] }
-fn inside(r: usize, c: usize) -> bool { r*6 + c < 36 }
+fn at(board: &Vec<u8>, r: usize, c: usize) -> u8 { board[r*side(&board) + c] }
+fn inside(board: &Vec<u8>, r: usize, c: usize) -> bool { r*side(&board) + c < board.len() }
 
-fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool {
+fn can_set(board: &Vec<u8>, i: usize, constraints: &Vec<u8>, new: u8) -> bool {
     let drs = [0usize, 1];
     let dcs = [1usize, 0];
-    let r: usize = i/6;
-    let c: usize = i%6;
+    let side = board.len().isqrt();
+    let (r, c) = (row(i, side), col(i, side));
 
     // no more than three in a row or column
     for v in 0..2 {
         let (dr, dc) = (drs[v], dcs[v]);
         let mut num_existing = 0;
         let (mut _r, mut _c) = (r*dc, c*dr);
-        for _ in 0..6 {
+        for _ in 0..side {
             let curr = at(board, _r, _c);
             if !(_r == r && _c == c) && curr == new {
                 num_existing += 1;
@@ -51,7 +46,7 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
         let (mut _r, mut _c) = if dr == 0 { (r, 0) } else { (0, c)};
         let mut streak = 1;
         let mut prev = 255u8;
-        for _ in 0..6 {
+        for _ in 0..side {
             let curr = at(board, _r, _c);
             streak = if curr != 2 && curr == prev { streak + 1 } else { 1 };
             if streak == 3 { return false; }
@@ -71,7 +66,7 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
         let _nc = (c as i16) + _dcs[j%4];
         if _nr < 0 || _nc < 0 { continue; }
         let (nr, nc) = (_nr as usize, _nc as usize);
-        if !inside(nr, nc) { continue; }
+        if !inside(&board, nr, nc) { continue; }
         let rule = constraint & (1 << j);
         if rule == 0 { continue; }
         let nbr_val = at(board, nr, nc);
@@ -83,8 +78,8 @@ fn can_set(board: &[u8; 36], i: usize, constraints: &[u8; 36], new: u8) -> bool 
     true
 }
 
-fn helper(board: &mut [u8; 36], i: usize, constraints: &[u8; 36]) -> bool {
-    if i == 36 {
+fn helper(board: &mut Vec<u8>, i: usize, constraints: &Vec<u8>) -> bool {
+    if i == board.len() {
         return true;
     }
     if board[i] != 2 {
@@ -102,46 +97,49 @@ fn helper(board: &mut [u8; 36], i: usize, constraints: &[u8; 36]) -> bool {
     false
 }
 
-pub fn solve(board: &mut [u8; 36], constraints: &[u8; 36]) -> bool {
+pub fn solve(board: &mut Vec<u8>, constraints: &Vec<u8>) -> bool {
     helper(board, 0, constraints)
 }
 
 // 1: j is west of i -> i's shift is 3, j's is 1
 // -1: j is east of i -> i's shift is 1, j's is 3
-// 6: j is north of i -> i's shift is 0, j's is 2
-// -6: j is south of i -> i's shift is 2, j's is 0
+// side: j is north of i -> i's shift is 0, j's is 2
+// -side: j is south of i -> i's shift is 2, j's is 0
 // any other number: not adjacent
-fn adjacent(i: u8, j: u8) -> i8 {
+fn adjacent(i: usize, j: usize, side: usize) -> i8 {
     let mut result = 0i8;
-    if i/6 == j/6 || i%6 == j%6 { result = (i as i8) - (j as i8); }  // same row or col
-    if result == 1 || result == -1 || result == 6 || result == -6 {
+    if row(i, side) == row(j, side) || col(i, side) == col(j, side) {
+        result = (i as i8) - (j as i8);
+    }
+    if result == 1 || result == -1 || result == (side as i8) || result == -(side as i8) {
         result
     } else {
         0  // not adjacent
     }
 }
 
-pub fn parse_constraints(constraints: &Vec<Constraint>, result: &mut[u8; 36]) {
+pub fn parse_constraints(constraints: &Vec<Constraint>, result: &mut Vec<u8>, side: usize) {
     let adjacencies = [1i8, -1, 6, -6];
     let from_shifts = [3u8, 1, 0, 2];
     let to_shifts = [1u8, 3, 2, 0];
     for constraint in constraints.iter() {
-        let adjacency = adjacent(constraint.from, constraint.to);
+        let adjacency = adjacent(constraint.from, constraint.to, side);
         if adjacency == 0 { continue; }
-        let index = adjacencies.iter().position(|&x| x == adjacency).unwrap_or(255);
+        let index = adjacencies.iter().position(|&x| x == adjacency).unwrap_or(255) as usize;
         if index == 255 { continue; }
-        let mut from_shift = from_shifts[index as usize];
-        let mut to_shift = to_shifts[index as usize];
+        let mut from_shift = from_shifts[index];
+        let mut to_shift = to_shifts[index];
         if !constraint.eq {
             from_shift += 4;
             to_shift += 4;
         }
-        result[constraint.from as usize] |= 1 << from_shift;
-        result[constraint.to as usize] |= 1 << to_shift;
+        result[constraint.from] |= 1 << from_shift;
+        result[constraint.to] |= 1 << to_shift;
     }
 }
 
-pub fn parse_board(input: &str, output: &mut [u8; 36]) {
+pub fn parse_board(input: &str, output: &mut Vec<u8>) {
+    output.reserve(input.len());
     for (i, c) in input.chars().enumerate() {
         output[i] = c.to_digit(10).unwrap() as u8;
     }
@@ -214,11 +212,11 @@ mod tests {
 
         for (index, testcase) in testcases.iter().enumerate() {
             let (mut board, mut solution, mut constraints) = (
-                [0u8; 36], [0u8; 36], [0u8; 36],
+                vec![0u8; 36], vec![0u8; 36], vec![0u8; 36],
             );
             parse_board(&testcase.board, &mut board);
             parse_board(&testcase.solution, &mut solution);
-            parse_constraints(&testcase.constraints, &mut constraints);
+            parse_constraints(&testcase.constraints, &mut constraints, /*side=*/side(&board));
 
             print!("Testcase {}: ", index+1);
 
