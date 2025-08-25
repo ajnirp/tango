@@ -1,5 +1,7 @@
-// Boards are stored as arrays of 36 ints.
+// Boards are stored as arrays of `side*side` ints. `side` is the number of
+// in one side of the square board.
 // 0 = sun, 1 = moon, 2 = blank square.
+//
 // Constraints are stored as an array of 36 ints. Each element is an 8-bit
 // bitmask ABCDEFGH where A through D are the bits representing a "x" constraint
 // North, East, South, West, and E through H are the bits representing a "="
@@ -118,6 +120,7 @@ fn adjacent(i: usize, j: usize, side: usize) -> i8 {
     }
 }
 
+// Expects `result` to already have the right size.
 pub fn parse_constraints(constraints: &Vec<Constraint>, result: &mut Vec<u8>, side: usize) {
     let adjacencies = [1i8, -1, 6, -6];
     let from_shifts = [3u8, 1, 0, 2];
@@ -138,10 +141,10 @@ pub fn parse_constraints(constraints: &Vec<Constraint>, result: &mut Vec<u8>, si
     }
 }
 
-pub fn parse_board(input: &str, output: &mut Vec<u8>) {
-    output.reserve(input.len());
+// Expects `result` to already have the right size.
+pub fn parse_board(input: &str, result: &mut Vec<u8>) {
     for (i, c) in input.chars().enumerate() {
-        output[i] = c.to_digit(10).unwrap() as u8;
+        result[i] = c.to_digit(10).unwrap() as u8;
     }
 }
 
@@ -208,19 +211,29 @@ mod tests {
                 ],
                 solution: "110100010011001101110100101010001011",
             },
+            Testcase {
+                board: "2222222020012221222222202100222222221102022222221222101212222222",
+                constraints: vec![
+                    Constraint { from: 5, to: 13, eq: false },
+                    Constraint { from: 13, to: 21, eq: true },
+                    Constraint { from: 42, to: 50, eq: false },
+                    Constraint { from: 50, to: 58, eq: true },
+                ],
+                solution: "2222222020012221222222202100222222221102022222221222101212222222",
+            }
         ];
 
-        for (index, testcase) in testcases.iter().enumerate() {
+        for testcase in testcases.iter() {
             let (mut board, mut solution, mut constraints) = (
-                vec![0u8; 36], vec![0u8; 36], vec![0u8; 36],
+                vec![0u8; testcase.board.len()],
+                vec![0u8; testcase.board.len()],
+                vec![0u8; testcase.board.len()],
             );
             parse_board(&testcase.board, &mut board);
             parse_board(&testcase.solution, &mut solution);
             parse_constraints(&testcase.constraints, &mut constraints, /*side=*/side(&board));
 
-            print!("Testcase {}: ", index+1);
-
-            solve(&mut board, &constraints);
+            assert_eq!(solve(&mut board, &constraints), true);
             assert_eq!(board, solution);
         }
     }
