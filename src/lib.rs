@@ -6,81 +6,19 @@
 mod board;
 mod constraint;
 mod solver;
+mod testing;
 
 pub use board::parse_board;
 pub use constraint::{parse_constraints, Constraint};
 pub use solver::solve;
+pub use testing::{Testcase, is_solved};
 
 #[cfg(test)]
 mod tests {
-    use crate::board::{at, parse_board, side};
+    use crate::board::{parse_board, side};
     use crate::constraint::{parse_constraints, Constraint};
     use crate::solver::solve;
-
-    struct Testcase {
-        board: &'static str,
-        constraints: Vec<Constraint>,
-        solution: &'static str,
-    }
-
-    fn print(board: &Vec<u8>) {
-        let side = side(&board);
-        for i in 0..side {
-            for j in 0..side {
-                print!("{} ", board[i * side + j]);
-            }
-            println!("");
-        }
-    }
-
-    fn valid_line(line: &[u8]) -> bool {
-        let side = line.len();
-        let num_suns = line.into_iter().filter(|x| **x == 0).count();
-        let num_moons = line.into_iter().filter(|x| **x == 1).count();
-        if num_suns != side / 2 || num_moons != side / 2 {
-            return false;
-        }
-        for i in 0..(side - 2) {
-            if line[i] == line[i + 1] && line[i] == line[i + 2] {
-                return false;
-            }
-        }
-        true
-    }
-
-    fn valid(board: &Vec<u8>, constraints: &Vec<Constraint>) -> bool {
-        let side = side(&board);
-        for r in 0..side {
-            let slice: &[u8] = &board[(r * side)..(r * side + side)];
-            if !valid_line(&slice) {
-                return false;
-            }
-        }
-        for c in 0..side {
-            let mut line = vec![0u8; side];
-            for r in 0..side {
-                line[r] = at(board, r, c);
-            }
-            if !valid_line(&line) {
-                return false;
-            }
-        }
-        for constraint in constraints.iter() {
-            let from = board[constraint.from];
-            let to = board[constraint.to];
-            if constraint.eq && from == to {
-                continue;
-            } else if !constraint.eq && from != to {
-                continue;
-            }
-            return false;
-        }
-        true
-    }
-
-    fn solved(board: &Vec<u8>, constraints: &Vec<Constraint>) -> bool {
-        valid(&board, &constraints) && board.iter().all(|&x| x != 2)
-    }
+    use crate::testing::{Testcase, is_solved};
 
     #[test]
     fn solver_works() {
@@ -267,7 +205,7 @@ mod tests {
             },
         ];
 
-        for (index, testcase) in testcases.iter().enumerate() {
+        for testcase in testcases.iter() {
             let (mut board, mut solution, mut constraints) = (
                 vec![0u8; testcase.board.len()],
                 vec![0u8; testcase.board.len()],
@@ -277,12 +215,8 @@ mod tests {
             parse_board(&testcase.solution, &mut solution);
             parse_constraints(&testcase.constraints, &mut constraints, side(&board));
 
-            println!("Testcase {}", index + 1);
             assert_eq!(solve(&mut board, &constraints), true);
-            if side(&board) == 8 {
-                print(&board);
-            }
-            assert_eq!(solved(&board, &testcase.constraints), true);
+            assert_eq!(is_solved(&board, &testcase.constraints), true);
             assert_eq!(board, solution);
         }
     }
