@@ -65,5 +65,17 @@ pub fn testcases() -> Vec<Testcase> {
             ],
             solution: "0110101010010101001101101100100101101100001100111100101010010101",
         },
+        Testcase {
+            board: "221121212222122222122222212222221120",
+            constraints: vec![
+                Constraint { from: 9, to: 10, eq: false },
+                Constraint { from: 9, to: 15, eq: true },
+                Constraint { from: 14, to: 15, eq: false },
+                Constraint { from: 20, to: 21, eq: false },
+                Constraint { from: 21, to: 27, eq: false },
+                Constraint { from: 27, to: 28, eq: false },
+            ],
+            solution: "001101010011101010110100010011101100",
+        }
     ];
 }
