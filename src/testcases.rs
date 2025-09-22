@@ -76,6 +76,64 @@ pub fn testcases() -> Vec<Testcase> {
                 Constraint { from: 27, to: 28, eq: false },
             ],
             solution: "001101010011101010110100010011101100",
+        },
+        Testcase {
+            board: "222222222222222122221222222222222222",
+            constraints: vec![
+                Constraint { from: 0, to: 1, eq: true },
+                Constraint { from: 3, to: 4, eq: false },
+                Constraint { from: 2, to: 8, eq: false },
+                Constraint { from: 5, to: 11, eq: false },
+                Constraint { from: 6, to: 12, eq: true },
+                Constraint { from: 16, to: 17, eq: true },
+                Constraint { from: 18, to: 19, eq: false },
+                Constraint { from: 23, to: 29, eq: false },
+                Constraint { from: 24, to: 30, eq: false },
+                Constraint { from: 27, to: 33, eq: false },
+                Constraint { from: 31, to: 32, eq: false },
+                Constraint { from: 34, to: 35, eq: true },
+            ],
+            solution: "001101110010101100011001100110010011",
+        },
+        Testcase {
+            board: "220222211222001222222022222212222222",
+            constraints: vec![
+                Constraint { from: 17, to: 23, eq: false },
+                Constraint { from: 29, to: 35, eq: true },
+                Constraint { from: 32, to: 33, eq: false },
+                Constraint { from: 34, to: 35, eq: false },
+            ],
+            solution: "110100011010001101110010001011100101",
+        },
+        Testcase {
+            board: "210022221222222222222222222122221002",
+            constraints: vec![
+                Constraint { from: 6, to: 12, eq: false },
+                Constraint { from: 12, to: 13, eq: true },
+                Constraint { from: 12, to: 18, eq: true },
+                Constraint { from: 17, to: 23, eq: false },
+                Constraint { from: 22, to: 23, eq: false },
+                Constraint { from: 23, to: 29, eq: true },
+            ],
+            solution: "010011101100001011010110110100101001",
+        },
+        Testcase {
+            board: "002222212010202221212200101220222221",
+            constraints: vec![
+                Constraint { from: 2, to: 3, eq: false },
+                Constraint { from: 32, to: 33, eq: false }
+            ],
+            solution: "001011110010001101110100101010010101",
+        },
+        Testcase {
+            board: "110222121222001222222222222222222222",
+            constraints: vec![
+                Constraint { from: 21, to: 22, eq: false },
+                Constraint { from: 23, to: 29, eq: true },
+                Constraint { from: 27, to: 33, eq: true },
+                Constraint { from: 34, to: 35, eq: false },
+            ],
+            solution: "110010101001001101110010010110001101",
         }
     ];
 }
