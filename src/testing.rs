@@ -1,6 +1,7 @@
 // Utilities to test the solver.
 
-use crate::board::{Board, Constraint};
+use crate::board::Board;
+use crate::constraint::Constraint;
 
 pub struct Testcase {
     pub board: &'static str,

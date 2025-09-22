@@ -1,6 +1,6 @@
 // A list of testcases for the solver.
 
-use crate::board::Constraint;
+use crate::constraint::Constraint;
 use crate::testing::Testcase;
 
 pub fn testcases() -> Vec<Testcase> {

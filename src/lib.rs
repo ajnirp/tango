@@ -1,16 +1,19 @@
 mod board;
+mod constraint;
 mod solver;
 mod testcases;
 mod testing;
 
 pub use board::Board;
+pub use constraint::Constraint;
 pub use solver::solve;
 pub use testcases::testcases;
 pub use testing::{is_solved, Testcase};
 
 #[cfg(test)]
 mod tests {
-    use crate::board::{Board, Constraint};
+    use crate::board::Board;
+    use crate::constraint::Constraint;
     use crate::solver::solve;
     use crate::testcases::testcases;
     use crate::testing::is_solved;
