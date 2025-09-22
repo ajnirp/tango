@@ -1,7 +1,6 @@
 // Utilities to test the solver.
 
-use crate::board::{at, side};
-use crate::constraint::Constraint;
+use crate::board::{Board, Constraint};
 
 pub struct Testcase {
     pub board: &'static str,
@@ -24,10 +23,10 @@ fn valid_line(line: &[u8]) -> bool {
     true
 }
 
-fn valid(board: &Vec<u8>, constraints: &Vec<Constraint>) -> bool {
-    let side = side(&board);
+fn valid(board: &Board, constraints: &Vec<Constraint>) -> bool {
+    let side = board.side();
     for r in 0..side {
-        let slice: &[u8] = &board[(r * side)..(r * side + side)];
+        let slice: &[u8] = board.row_slice(r * side, r * side + side);
         if !valid_line(&slice) {
             return false;
         }
@@ -35,15 +34,15 @@ fn valid(board: &Vec<u8>, constraints: &Vec<Constraint>) -> bool {
     for c in 0..side {
         let mut line = vec![0u8; side];
         for r in 0..side {
-            line[r] = at(board, r, c);
+            line[r] = board.at(r, c);
         }
         if !valid_line(&line) {
             return false;
         }
     }
     for constraint in constraints.iter() {
-        let from = board[constraint.from];
-        let to = board[constraint.to];
+        let from = board.at_index(constraint.from);
+        let to = board.at_index(constraint.to);
         if constraint.eq && from == to {
             continue;
         } else if !constraint.eq && from != to {
@@ -54,6 +53,6 @@ fn valid(board: &Vec<u8>, constraints: &Vec<Constraint>) -> bool {
     true
 }
 
-pub fn is_solved(board: &Vec<u8>, constraints: &Vec<Constraint>) -> bool {
-    valid(&board, &constraints) && board.iter().all(|&x| x != 2)
+pub fn is_solved(board: &Board, constraints: &Vec<Constraint>) -> bool {
+    valid(&board, &constraints) && board.cells().iter().all(|&x| x != 2)
 }

@@ -1,9 +1,9 @@
-use crate::board::{at, col, inside, row, side};
+use crate::board::Board;
 
-fn can_set(board: &Vec<u8>, i: usize, constraints: &Vec<u8>, new: u8) -> bool {
+fn can_set(board: &Board, i: usize, new: u8) -> bool {
     let (drs, dcs) = ([0usize, 1], [1usize, 0]);
-    let side = side(&board);
-    let (r, c) = (row(i, side), col(i, side));
+    let side = board.side();
+    let (r, c) = (board.row(i), board.col(i));
 
     for v in 0..2 {
         let (dr, dc) = (drs[v], dcs[v]);
@@ -17,7 +17,7 @@ fn can_set(board: &Vec<u8>, i: usize, constraints: &Vec<u8>, new: u8) -> bool {
         let mut num_existing = 0;
 
         for _ in 0..side {
-            let curr = if (_r, _c) == (r, c) { new } else { at(board, _r, _c) };
+            let curr = if (_r, _c) == (r, c) { new } else { board.at(_r, _c) };
 
             // three consecutive identical not allowed
             if one == two && two == curr && curr != 2 {
@@ -42,7 +42,7 @@ fn can_set(board: &Vec<u8>, i: usize, constraints: &Vec<u8>, new: u8) -> bool {
     // north, east, south, west
     let _drs = [-1i16, 0, 1, 0];
     let _dcs = [0i16, 1, 0, -1];
-    let constraint = at(constraints, r, c);
+    let constraint = board.constraint_at(r, c);
     for j in 0..8 {
         if constraint & (1 << j) == 0 { continue; }
 
@@ -51,9 +51,9 @@ fn can_set(board: &Vec<u8>, i: usize, constraints: &Vec<u8>, new: u8) -> bool {
         if _nr < 0 || _nc < 0 { continue; }
 
         let (nr, nc) = (_nr as usize, _nc as usize);
-        if !inside(&board, nr, nc) { continue; }
+        if !board.inside(nr, nc) { continue; }
 
-        let nbr_val = at(board, nr, nc);
+        let nbr_val = board.at(nr, nc);
         if nbr_val == 2 { continue; }
 
         if (j < 4 && nbr_val == new) || (j >= 4 && nbr_val != new) {
@@ -65,27 +65,27 @@ fn can_set(board: &Vec<u8>, i: usize, constraints: &Vec<u8>, new: u8) -> bool {
     true
 }
 
-fn helper(board: &mut Vec<u8>, i: usize, constraints: &Vec<u8>) -> bool {
-    if i == board.len() {
+fn helper(board: &mut Board, i: usize) -> bool {
+    if i == board.num_cells() {
         return true;
     }
-    if board[i] != 2 {
+    if board.at_index(i) != 2 {
         // already filled, move on
-        return helper(board, i + 1, constraints);
+        return helper(board, i + 1);
     }
     for new in 0..2 {
         // set a value only if it's safe to do so
-        if can_set(board, i, constraints, new) {
-            board[i] = new;
-            if helper(board, i + 1, constraints) {
+        if can_set(board, i, new) {
+            board.set_index(i, new);
+            if helper(board, i + 1) {
                 return true;
             }
-            board[i] = 2;
+            board.set_index(i, 2);
         }
     }
     false
 }
 
-pub fn solve(board: &mut Vec<u8>, constraints: &Vec<u8>) -> bool {
-    helper(board, 0, constraints)
+pub fn solve(board: &mut Board) -> bool {
+    helper(board, 0)
 }
