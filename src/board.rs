@@ -8,16 +8,15 @@ pub struct Constraint {
 // -1: j is east of i -> i's shift is 1, j's is 3
 // side: j is north of i -> i's shift is 0, j's is 2
 // -side: j is south of i -> i's shift is 2, j's is 0
-// any other number: not adjacent
-fn adjacent(i: usize, j: usize, side: usize) -> i8 {
+fn adjacent(i: usize, j: usize, side: usize) -> Option<i8> {
     let mut result = 0i8;
     if i / side == j / side || i % side == j % side {
         result = (i as i8) - (j as i8);
     }
     if result == 1 || result == -1 || result == (side as i8) || result == -(side as i8) {
-        result
+        Some(result)
     } else {
-        0 // not adjacent
+        None // not adjacent
     }
 }
 
@@ -28,16 +27,16 @@ fn parse_constraints(constraints: &Vec<Constraint>, side: usize) -> Vec<u8> {
     let mut result = vec![0; side*side];
     for constraint in constraints.iter() {
         let adjacency = adjacent(constraint.from, constraint.to, side);
-        if adjacency == 0 {
+        if adjacency.is_none() {
             continue;
         }
         let index = adjacencies
             .iter()
-            .position(|&x| x == adjacency)
-            .unwrap_or(255) as usize;
-        if index == 255 {
+            .position(|&x| x == adjacency.unwrap());
+        if index.is_none() {
             continue;
         }
+        let index = index.unwrap();
         let mut from_shift = from_shifts[index];
         let mut to_shift = to_shifts[index];
         if !constraint.eq {
