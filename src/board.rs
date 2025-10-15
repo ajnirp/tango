@@ -1,5 +1,8 @@
 use crate::constraint::{Constraint, parse_constraints};
 
+use rand::rng;
+use rand::seq::SliceRandom;
+
 // Boards are stored as arrays of `side*side` ints. `side` is the number of
 // in one side of the square board.
 // 0 = sun, 1 = moon, 2 = blank square.
@@ -8,15 +11,15 @@ pub struct Board {
     side: usize,
     cells: Vec<u8>,
     constraints: Vec<u8>,
-    solve_state: SolveState,
-}
-
-#[derive(Debug)]
-pub struct SolveState {
-    // Vector of initially unsolved cells. Never changes.
+    
+    // Vector of cells that were initially unsolved. Never changes.
     initially_unsolved: Vec<usize>,
 
-    // Index into unsolved cells. We advance the index when that cell is solved.
+    // Index into unsolved cells. Reflects solver progress. In the backtracking
+    // solver, we increment this value when the cell it points to is solved, and
+    // decrement it when the previously-assigned value turns out to be a dead
+    // end in our search.
+    //
     // When `num_solved` equals `initially_unsolved.len()`, the board is solved.
     num_solved: usize,
 }
@@ -67,52 +70,53 @@ impl Board {
     }
 
     pub fn is_solved(&self) -> bool {
-        return self.solve_state.num_solved == self.solve_state.initially_unsolved.len();
+        return self.num_solved == self.initially_unsolved.len();
     }
 
     pub fn next_unsolved(&self) -> Option<usize> {
         if self.is_solved() {
             None
         } else {
-            Some(self.solve_state.initially_unsolved[self.solve_state.num_solved])
+            Some(self.initially_unsolved[self.num_solved])
         }
     }
 
     pub fn mark_solved(&mut self) {
         // Should not increment past `initially_unsolved.len()`
-        if self.solve_state.num_solved < self.solve_state.initially_unsolved.len() {
-            self.solve_state.num_solved += 1;
+        if self.num_solved < self.initially_unsolved.len() {
+            self.num_solved += 1;
         }
     }
 
     pub fn mark_unsolved(&mut self) {
         // Should not decrement past `0`.
-        if self.solve_state.num_solved > 0 {
-            self.solve_state.num_solved -= 1;
+        if self.num_solved > 0 {
+            self.num_solved -= 1;
         }
     }
 
     pub fn parse_from(board: &str, constraints: &Vec<Constraint>) -> Board {
         let mut cells = Vec::<u8>::with_capacity(board.len());
-        let side = board.len().isqrt();
-        for c in board.chars() {
-            cells.push(c.to_digit(10).unwrap() as u8);
-        }
-
         let mut initially_unsolved = Vec::<usize>::with_capacity(board.len());
-        for (index, cell) in cells.iter().enumerate() {
-            if *cell == 2 {
+
+        let side = board.len().isqrt();
+        for (index, char) in board.chars().enumerate() {
+            let val = char.to_digit(10).unwrap() as u8;
+            if val == 2 {
                 initially_unsolved.push(index);
             }
+            cells.push(val);
         }
+
+        // Shuffle so that our solver proceeds in a random order.
+        initially_unsolved.shuffle(&mut rng());
+
         Board {
             side: side,
             cells: cells,
             constraints: parse_constraints(&constraints, side),
-            solve_state: SolveState {
-                initially_unsolved: initially_unsolved,
-                num_solved: 0,
-            }
+            initially_unsolved: initially_unsolved,
+            num_solved: 0,
         }
     }
 }
