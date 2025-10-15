@@ -65,27 +65,27 @@ fn can_set(board: &Board, i: usize, new: u8) -> bool {
     true
 }
 
-fn helper(board: &mut Board, i: usize) -> bool {
-    if i == board.num_cells() {
+fn helper(board: &mut Board) -> bool {
+    let i = board.next_unsolved();
+    if i == None {
         return true;
     }
-    if board.at_index(i) != 2 {
-        // already filled, move on
-        return helper(board, i + 1);
-    }
+    let i = i.unwrap();
+    board.mark_solved();
     for new in 0..2 {
         // set a value only if it's safe to do so
         if can_set(board, i, new) {
             board.set_index(i, new);
-            if helper(board, i + 1) {
+            if helper(board) {
                 return true;
             }
             board.set_index(i, 2);
         }
     }
+    board.mark_unsolved();
     false
 }
 
 pub fn solve(board: &mut Board) -> bool {
-    helper(board, 0)
+    helper(board)
 }
